@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { Lock, Mail, Eye, EyeOff, Activity, User } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, Activity, User, AlertCircle, CheckCircle} from 'lucide-react';
+import { login, update_login, register } from '../services/authService';
 
 export default function Login() {
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
+  const [mode, setMode] = useState('login'); 
 
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState(''); // register only
+  const [email, setEmail] = useState(''); 
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState(''); // register only
+  const [confirmPassword, setConfirmPassword] = useState(''); 
+  const [message, setMessage] = useState({ type: '', text: '' }); 
+
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -32,7 +35,6 @@ export default function Login() {
 
     if (isRegister) {
       if (!email.trim()) return 'Email is required.';
-      // Minimal email check (client-side convenience only)
       if (!/^\S+@\S+\.\S+$/.test(email.trim())) return 'Please enter a valid email.';
       if (!confirmPassword) return 'Please confirm your password.';
       if (password !== confirmPassword) return 'Passwords do not match.';
@@ -42,19 +44,54 @@ export default function Login() {
     return null;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    setMessage({ type: '', text: '' })
     const error = validate();
     if (error) {
       alert(error);
       return;
     }
 
+    if (!username || !password) { 
+      setMessage({ type: 'error', text: t.errorEmptyFields }); 
+      return; 
+    }
+
     if (isRegister) {
-      console.log('Register attempt:', { username, email, password });
-      alert('Register functionality would connect to your backend here');
-    } else {
-      console.log('Login attempt:', { username, password });
-      alert('Login functionality would connect to your backend here');
+
+      try {
+        await register(username, password, email); 
+        setMessage({ type: 'success', text: "Succesful Registered" });
+
+        setTimeout(() => {
+          setMessage({type: "", text: ""})
+        }, 5000);
+
+      } catch (error) { 
+        setMessage({type: 'error', text: error.message})
+
+        setTimeout(() => {
+          setMessage({type: "", text: ""})
+        }, 5000);
+      }
+
+    }else {
+      try {
+        const response = await login(username, password); 
+        localStorage.setItem('token', response.access_token); 
+        setMessage({ type: 'success', text: "Succesful Login" });
+        await update_login(username)
+
+        setTimeout(() => {
+          setMessage({type: "", text: ""})
+        }, 3000);
+
+      } catch (error) { 
+        setMessage({ type: 'error', text: "Invalid Credentials" }); 
+        setTimeout(() => {
+          setMessage({type: "", text: ""})
+        }, 3000);
+      }
     }
   };
 
@@ -209,14 +246,7 @@ export default function Login() {
             </div>
           )}
 
-          {/* Links (login only) */}
-          {!isRegister && (
-            <div className="flex items-center justify-between mb-6">
-              <a href="#" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                Forgot Password?
-              </a>
-            </div>
-          )}
+
 
           {/* Submit button */}
           <button
@@ -225,6 +255,29 @@ export default function Login() {
           >
             {isRegister ? 'Create Account' : 'Sign In'}
           </button>
+
+          {message.text && (
+            <div
+              className={`mt-4 p-4 rounded-lg flex items-start gap-3 animate-fade-in ${
+                message.type === 'error'
+                  ? 'bg-red-50 border border-red-200'
+                  : 'bg-green-50 border border-green-200'
+              }`}
+            >
+              {message.type === 'error' ? (
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              ) : (
+                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+              )}
+              <p
+                className={`text-sm font-medium ${
+                  message.type === 'error' ? 'text-red-700' : 'text-green-700'
+                }`}
+              >
+                {message.text}
+              </p>
+            </div>
+          )}
 
           {/* Divider */}
           <div className="relative my-6">
@@ -255,3 +308,4 @@ export default function Login() {
     </div>
   );
 }
+ 
