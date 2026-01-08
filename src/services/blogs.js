@@ -24,7 +24,6 @@ export const createBlog = async (body, token) => {
     const data = await res.json();
     console.log("Created blog:", data);
 
-    setShowAddModal(false);
     setFormData({ name: "", description: "" });
 
   } catch (error) {
@@ -32,8 +31,6 @@ export const createBlog = async (body, token) => {
   }
 
 }
-
-
 
 export const getAllBlogs = async (token) => {
     const res = await fetch("http://localhost:8000/blogs/all_blogs", {
