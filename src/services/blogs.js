@@ -75,3 +75,25 @@ export const getAllBlogs = async (token) => {
     return data;
   };
   
+  export const deleteBlog = async (blogId, token) => {
+    const res = await fetch(`http://localhost:8000/blogs/${blogId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  
+    if (res.status === 401) {
+      localStorage.removeItem("token");
+      throw new Error("UNAUTHORIZED");
+    }
+  
+    const data = await res.json().catch(() => ({}));
+  
+    if (!res.ok) {
+      throw new Error(data.detail || "Failed to delete blog");
+    }
+  
+    return data; // { message: "...", deleted_id: blogId }
+  };
+  

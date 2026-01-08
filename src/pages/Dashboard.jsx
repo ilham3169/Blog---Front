@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Edit2, Trash2, Plus, LogOut, Settings } from 'lucide-react';
 
 import { checkExistingSession } from '../services/authService.js';
-import { createBlog, getAllBlogs, editBlog } from '../services/blogs.js';
+import { createBlog, getAllBlogs, editBlog, deleteBlog } from '../services/blogs.js';
 import BlogModal from '../pages/BlogModal.jsx';
 import ProfileModal from '../pages/ProfileModal.jsx'
 
@@ -82,11 +82,31 @@ const BlogDashboard = () => {
     setFormData({ title: blog?.title ?? '', description: blog?.description ?? '' });
   };
 
-  const handleRemove = (id) => {
-    if (window.confirm('Are you sure you want to remove this blog?')) {
+  const handleRemove = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this blog?")) {
+      return;
+    }
+  
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
+  
+    try {
+      await deleteBlog(id, token);
       setBlogs((prev) => prev.filter((b) => b.id !== id));
+    } catch (err) {
+      if (err.message === "UNAUTHORIZED") {
+        localStorage.removeItem("token");
+        navigate("/login", { replace: true });
+        return;
+      }
+  
+      alert(err.message || "Failed to delete blog");
     }
   };
+  
 
   const handleSave = async () => {
     setModalError('');
