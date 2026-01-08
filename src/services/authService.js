@@ -28,6 +28,26 @@ export const verifyToken = async (token) => {
   return await response.json();
 };
 
+export const checkExistingSession = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) return { isValid: false };
+
+  try {
+    const response = await fetch(`http://localhost:8000/auth/verify-token?token=${token}`);
+    const data = await response.json();
+
+    if (data.status === "valid" && data.time > 0) {
+      return { isValid: true, userData: data.user };
+    } else {
+      localStorage.removeItem('token');
+      return { isValid: false };
+    }
+  } catch (error) {
+    localStorage.removeItem('token');
+    return { isValid: false };
+  }
+};
+
 export const register = async (username, password, email) => {
   const response = await fetch(`${API_URL}/register`, {
     method: "POST",

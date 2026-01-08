@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Lock, Mail, Eye, EyeOff, Activity, User, AlertCircle, CheckCircle} from 'lucide-react';
 import { login, update_login, register } from '../services/authService';
+import { useNavigate } from 'react-router-dom'; 
+import { checkExistingSession } from '../services/authService';
+
+
 
 export default function Login() {
   const [mode, setMode] = useState('login'); 
@@ -10,11 +14,21 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState(''); 
   const [message, setMessage] = useState({ type: '', text: '' }); 
-
+  const navigate = useNavigate(); 
 
   const [showPassword, setShowPassword] = useState(false);
 
   const isRegister = mode === 'register';
+
+  useEffect(() => {
+    const verify = async () => {
+        const session = await checkExistingSession();
+        if (session.isValid) {
+            navigate('/dashboard');
+        }
+    };
+    verify()
+  }, [navigate])
 
   const resetForm = () => {
     setUsername('');
@@ -67,9 +81,9 @@ export default function Login() {
           setMessage({type: "", text: ""})
         }, 5000);
 
+
       } catch (error) { 
         setMessage({type: 'error', text: error.message})
-
         setTimeout(() => {
           setMessage({type: "", text: ""})
         }, 5000);
@@ -83,10 +97,12 @@ export default function Login() {
         await update_login(username)
 
         setTimeout(() => {
-          setMessage({type: "", text: ""})
+          setMessage({ type: "", text: "" });
+          navigate("/dashboard");
         }, 3000);
-
+        
       } catch (error) { 
+        console.log(error.message)
         setMessage({ type: 'error', text: "Invalid Credentials" }); 
         setTimeout(() => {
           setMessage({type: "", text: ""})
@@ -116,8 +132,8 @@ export default function Login() {
               <Activity className="w-8 h-8" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-center mb-2">User Management System</h1>
-          <p className="text-blue-100 text-center text-sm">User Management System</p>
+          <h1 className="text-2xl font-bold text-center mb-2">Blog Management</h1>
+          <p className="text-blue-100 text-center text-sm">Blog - Intern</p>
         </div>
 
         {/* Form */}
