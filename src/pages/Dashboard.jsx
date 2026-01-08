@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Edit2, Trash2, Plus, LogOut, Settings } from 'lucide-react';
 
 import { checkExistingSession } from '../services/authService.js';
-import { createBlog, getAllBlogs } from '../services/blogs.js';
+import { createBlog, getAllBlogs, editBlog } from '../services/blogs.js';
 import BlogModal from '../pages/BlogModal.jsx';
 import ProfileModal from '../pages/ProfileModal.jsx'
 
@@ -90,6 +90,7 @@ const BlogDashboard = () => {
 
   const handleSave = async () => {
     setModalError('');
+    const t = localStorage.getItem('token');
 
     const session = await checkExistingSession();
     if (!session?.isValid) {
@@ -101,19 +102,28 @@ const BlogDashboard = () => {
     }
 
     if (editingBlog) {
-      setBlogs((prev) =>
-        prev.map((b) =>
-          b.id === editingBlog.id
-            ? { ...b, title: formData.title, description: formData.description }
-            : b
-        )
-      );
-      setEditingBlog(null);
-      setFormData({ title: '', description: '' });
-      return;
+      const body = { title: formData.title.trim(), description: formData.description.trim() };
+      try{
+        const updated = await editBlog(editingBlog.id, body, t);
+        const updatedBlog = updated?.blog ?? { ...editingBlog, ...body };
+        setBlogs((prev) =>
+          prev.map((b) => (b.id === editingBlog.id ? updatedBlog : b))
+        );
+        setEditingBlog(null);
+        setFormData({ title: "", description: "" });
+        setModalError("");
+        return;
+      } catch (error) {
+        if (error.message === "UNAUTHORIZED") {
+          localStorage.removeItem("token");
+          navigate("/login", { replace: true });
+          return;
+        }
+        setModalError(error.message || "Failed to update blog");
+        return;
+      }
     }
 
-    const t = localStorage.getItem('token');
     if (!t) {
       navigate('/login', { replace: true });
       return;
@@ -233,12 +243,10 @@ const BlogDashboard = () => {
       const data = await res.json();
       setProfileSuccess(data?.message || 'Updated successfully');
 
-      // Update localStorage user (so Welcome text updates after refresh)
       if (data?.user) {
         localStorage.setItem('user', JSON.stringify(data.user));
       }
 
-      // If your backend returns a new access token in future, support it:
       if (data?.access_token) {
         localStorage.setItem('token', data.access_token);
       }

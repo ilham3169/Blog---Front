@@ -50,3 +50,28 @@ export const getAllBlogs = async (token) => {
   
     return data;
   };
+
+  export const editBlog = async (blogId, body, token) => {
+    const res = await fetch(`http://localhost:8000/blogs/edit/${blogId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+  
+    if (res.status === 401) {
+      localStorage.removeItem("token");
+      throw new Error("UNAUTHORIZED");
+    }
+  
+    const data = await res.json().catch(() => ({}));
+  
+    if (!res.ok) {
+      throw new Error(data.detail || "Failed to update blog");
+    }
+  
+    return data;
+  };
+  
