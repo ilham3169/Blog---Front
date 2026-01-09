@@ -340,7 +340,14 @@ const BlogDashboard = () => {
                 key={blog.id}
                 className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl hover:-translate-y-1 transition-all"
               >
-                <h2 className="text-xl font-semibold text-gray-800 mb-3">{blog.title}</h2>
+                {/* <h2 className="text-xl font-semibold text-gray-800 mb-3">{blog.title} by "{blog.author_name}"</h2> */}
+                <h2 className="text-xl font-semibold text-gray-800 mb-3">
+                  {blog.title}{" "}
+                  <span className="text-sm font-medium text-gray-500">by</span>{" "}
+                  <span className="font-semibold text-indigo-600">
+                    {blog.author_name}
+                  </span>
+                </h2>
                 <p className="text-gray-600 mb-5 leading-relaxed">{blog.description}</p>
                 <div className="flex gap-3">
                   <button
